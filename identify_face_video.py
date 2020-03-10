@@ -17,6 +17,7 @@ classifier_filename = './class/classifier.pkl'
 npy = './align'
 train_img = "./imageTrain"
 
+
 with tf.Graph().as_default():
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.6)
     sess = tf.Session(config=tf.ConfigProto(
@@ -30,7 +31,7 @@ with tf.Graph().as_default():
         margin = 44
         frame_interval = 3
         batch_size = 1000
-        image_size = 182
+        image_size = 183
         input_image_size = 160
 
         HumanNames = os.listdir(train_img)
@@ -47,7 +48,7 @@ with tf.Graph().as_default():
         with open(classifier_filename_exp, 'rb') as infile:
             (model, class_names) = pickle.load(infile)
 
-        video_capture = cv2.VideoCapture(0)
+        video_capture = cv2.VideoCapture(1)
         c = 0
 
         print('Start Recognition')
@@ -56,7 +57,7 @@ with tf.Graph().as_default():
             ret, frame = video_capture.read()
 
             # resize frame (optional)
-            frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+            frame = cv2.resize(frame, (561, 561), fx=0.5, fy=0.5)
 
             curTime = time.time()+1    # calc fps
             timeF = frame_interval
@@ -67,7 +68,7 @@ with tf.Graph().as_default():
                 if frame.ndim == 2:
                     frame = facenet.to_rgb(frame)
                 frame = frame[:, :, 0:3]
-                bounding_boxes, _ = align.detect_face.detect_face(
+                bounding_boxes, points = align.detect_face.detect_face(
                     frame, minsize, pnet, rnet, onet, threshold, factor)
                 nrof_faces = bounding_boxes.shape[0]
                 print('Detected_FaceNum: %d' % nrof_faces)
@@ -126,6 +127,11 @@ with tf.Graph().as_default():
                             # boxing face
                             cv2.rectangle(
                                 frame, (bb[i][0], bb[i][1]), (bb[i][2], bb[i][3]), (0, 255, 0), 2)
+
+                            for p in points.T:
+                                for index in range(5):
+                                    cv2.circle(
+                                        frame, (p[index], p[index+5]), 1, (0, 0, 255), 2)
 
                             # plot result idx under box
                             text_x = bb[i][0]
